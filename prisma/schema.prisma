@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String    @id @default(cuid())
+  externalId  String    @unique
+  role        String    @default("customer")
+  bookings    Booking[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Device {
+  id        String       @id @default(cuid())
+  name      String
+  type      String
+  status    DeviceStatus @default(AVAILABLE)
+  games     DeviceGame[]
+  bookings  Booking[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model Game {
+  id      String       @id @default(cuid())
+  title   String
+  image   String?
+  devices DeviceGame[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model DeviceGame {
+  deviceId String
+  gameId   String
+  device   Device @relation(fields: [deviceId], references: [id])
+  game     Game   @relation(fields: [gameId], references: [id])
+
+  @@id([deviceId, gameId])
+}
+
+model Booking {
+  id               String  @id @default(cuid())
+  userId           String
+  deviceId         String
+  startTime        DateTime
+  endTime          DateTime
+  paymentConfirmed Boolean @default(false)
+  status           String  @default("PENDING")
+  user             User    @relation(fields: [userId], references: [id])
+  device           Device  @relation(fields: [deviceId], references: [id])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+enum DeviceStatus {
+  AVAILABLE
+  RESERVED
+  PLAYING
+  MAINTENANCE
+}
